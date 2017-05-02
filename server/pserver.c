@@ -5,6 +5,7 @@
 #include<fcntl.h>
 #include<sys/types.h>
 #include<sys/stat.h>
+#include<sys/wait.h>
 #include<unistd.h>
 #include<stdlib.h>
 #include<string.h>
@@ -31,6 +32,8 @@ void signal_handler(int no){
 	}
 }
 
+int startServer(int *serverFD, struct *sockaddr_in saddr, int numConnects);
+
 int main(int argc, char *argv[]){
     int server, client, errno, inet_len;
     char buffer[50];
@@ -40,32 +43,13 @@ int main(int argc, char *argv[]){
     char *TERM = "cmsc257";
     char *FNF = "File not found";
     char *CRASH = "Server Shut Down";
+	const int MAXCONNECTIONS = 5;
     
     signal(SIGINT, signal_handler);
-
-    saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(2432);
-    saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    server = socket(PF_INET, SOCK_STREAM, 0);
-    if(server == -1){
-        printf("Error on socket creation [%s]\n", strerror(errno));
-        return (-1);
-    }
-    
-    if(setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
-        printf("setsockopt failed");
-        return(-1);
-    }   
-    if(bind(server, (struct sockaddr *)&saddr, sizeof(struct sockaddr)) == -1){
-        printf("Error on socket bind [%s]\n", strerror(errno));
-        return (-1);
-    }
-
-    if(listen(server, 5) == -1){
-        printf("Erron on socket listen [%s]\n", strerror(errno));
-        return (-1);
-    }
+	if(startServer(&server, &saddr, MAXCONNECTIONS) != 0){
+		return(-1);
+	}
+   
 
     // the business end
     while(SIG == 0){
@@ -153,3 +137,30 @@ int main(int argc, char *argv[]){
     }
 }
 
+
+int startServer(int *server, struct *sockaddr_in saddr, int numConnects){
+	saddr.sin_family = AF_INET;
+    saddr.sin_port = htons(2432);
+    saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    server = socket(PF_INET, SOCK_STREAM, 0);
+    if(server == -1){
+        printf("Error on socket creation [%s]\n", strerror(errno));
+        return (-1);
+    }
+    
+    if(setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
+        printf("setsockopt failed");
+        return(-1);
+    }   
+    if(bind(server, (struct sockaddr *)&saddr, sizeof(struct sockaddr)) == -1){
+        printf("Error on socket bind [%s]\n", strerror(errno));
+        return (-1);
+    }
+
+    if(listen(server, numConnects) == -1){
+        printf("Erron on socket listen [%s]\n", strerror(errno));
+        return (-1);
+    }
+	return 0;
+}
