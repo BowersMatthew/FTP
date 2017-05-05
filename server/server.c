@@ -145,7 +145,7 @@ int main(int argc, char *argv[]){
                 }
             }
         }
-        if(SIG = 1){
+        if(SIG == 1){
             printf("Server Killed");
             close(server);
             return(-1);
